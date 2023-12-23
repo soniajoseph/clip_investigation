@@ -1,0 +1,8 @@
+[=== Module anaconda/3 loaded ===]
+[=== Module cudatoolkit/11.7 loaded ===]
+usage: get_activations.py [-h] --layer_num LAYER_NUM --MAX MAX
+get_activations.py: error: the following arguments are required: --MAX
+/etc/slurm/slurmtask_epilog: line 26: ${OUT_FILE}: ambiguous redirect
+/etc/slurm/slurmtask_epilog: line 27: ${OUT_FILE}: ambiguous redirect
+/etc/slurm/slurmtask_epilog: line 28: ${OUT_FILE}: ambiguous redirect
+slurmstepd: error: --task-epilog failed status=1

@@ -1,0 +1,4 @@
+[=== Module anaconda/3 loaded ===]
+[=== Module cudatoolkit/11.7 loaded ===]
+usage: get_activations.py [-h] --layer_num LAYER_NUM --MAX MAX
+get_activations.py: error: the following arguments are required: --MAX
