@@ -1,4 +1,4 @@
-Running layer number: 0
+Running layer number: 8
 Loaded cached activations and sorted by z-score.
 Saving to csv...
 Visualizing max/min results for each neurons
@@ -8,17 +8,17 @@ Done.
 
 ==============NVSMI LOG==============
 
-Timestamp                                 : Wed Dec 27 17:57:16 2023
+Timestamp                                 : Wed Dec 27 18:40:26 2023
 Driver Version                            : 535.104.12
 CUDA Version                              : 12.2
 
 Attached GPUs                             : 1
-GPU 00000000:81:00.0
-    Accounting Mode                       : Disabled
+GPU 00000000:41:00.0
+    Accounting Mode                       : Enabled
     Accounting Mode Buffer Size           : 4000
     Accounted Processes                   : None
 
-Wed Dec 27 17:57:16 2023       
+Wed Dec 27 18:40:26 2023       
 +---------------------------------------------------------------------------------------+
 | NVIDIA-SMI 535.104.12             Driver Version: 535.104.12   CUDA Version: 12.2     |
 |-----------------------------------------+----------------------+----------------------+
@@ -26,21 +26,10 @@ Wed Dec 27 17:57:16 2023
 | Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
 |                                         |                      |               MIG M. |
 |=========================================+======================+======================|
-|   0  NVIDIA A100-SXM4-80GB          On  | 00000000:81:00.0 Off |                   On |
-| N/A   34C    P0              85W / 500W |  12118MiB / 81920MiB |     N/A      Default |
-|                                         |                      |              Enabled |
+|   0  NVIDIA A100-SXM4-80GB          On  | 00000000:41:00.0 Off |                    0 |
+| N/A   26C    P0              60W / 500W |      2MiB / 81920MiB |      0%      Default |
+|                                         |                      |             Disabled |
 +-----------------------------------------+----------------------+----------------------+
-
-+---------------------------------------------------------------------------------------+
-| MIG devices:                                                                          |
-+------------------+--------------------------------+-----------+-----------------------+
-| GPU  GI  CI  MIG |                   Memory-Usage |        Vol|      Shared           |
-|      ID  ID  Dev |                     BAR1-Usage | SM     Unc| CE ENC DEC OFA JPG    |
-|                  |                                |        ECC|                       |
-|==================+================================+===========+=======================|
-|  0    2   0   0  |              16MiB / 40448MiB  | 42      0 |  3   0    2    0    0 |
-|                  |               0MiB / 65535MiB  |           |                       |
-+------------------+--------------------------------+-----------+-----------------------+
                                                                                          
 +---------------------------------------------------------------------------------------+
 | Processes:                                                                            |
