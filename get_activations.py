@@ -108,7 +108,7 @@ def process_images(model, processor, total_images, total_labels, batch_idx):
 
     return detailed_activations
 
-def main(layer_num, MAX):
+def main(layer_num, module_name='fc1', MAX=500):
 
     # Set the seed. You don't need indices if data is loaded in same order every time.
     seed = 42
@@ -122,15 +122,16 @@ def main(layer_num, MAX):
     imagenet_data = datasets.ImageFolder(imagenet_path, transform=data_transforms)
 
     save_path = f'/network/scratch/s/sonia.joseph/clip_mechinterp/tinyclip/mini_dataset/'
-    file_name = f'mlp_fc1_{layer_num}.npz'
+    file_name = f'mlp_{module_name}_{layer_num}.npz'
 
     # Make directory if doesn't exist
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
     # Example usage
+        
+    module = getattr(model.vision_model.encoder.layers[layer_num].mlp, module_name)
 
-    module = model.vision_model.encoder.layers[layer_num].mlp.fc1 # Layer number here
     hook_handle = register_hook(module)
 
     master_layer_activations = []
@@ -157,7 +158,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Process and save model activations")
     parser.add_argument("--layer_num", type=int, required=True, help="Model layer number to hook")
+    parser.add_argument("--module_name", type=str, default='fc1', required=False, help="Module name to hook")
     parser.add_argument("--MAX", type=int, default=500, required=False, help="Number of images to process")
 
     args = parser.parse_args()
-    main(args.layer_num, args.MAX)
+    main(args.layer_num, args.module_name, args.MAX)

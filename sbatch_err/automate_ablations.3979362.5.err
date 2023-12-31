@@ -1,0 +1,12 @@
+[=== Module anaconda/3 loaded ===]
+[=== Module cudatoolkit/11.7 loaded ===]
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+Traceback (most recent call last):
+  File "automate_ablations.py", line 362, in <module>
+    calculate_logit_diff_dictionary_per_class(new_cup_images, 'cups', cup_indices)
+TypeError: calculate_logit_diff_dictionary_per_class() missing 2 required positional arguments: 'layer_num' and 'layer_type'
+/etc/slurm/slurmtask_epilog: line 26: ${OUT_FILE}: ambiguous redirect
+/etc/slurm/slurmtask_epilog: line 27: ${OUT_FILE}: ambiguous redirect
+/etc/slurm/slurmtask_epilog: line 28: ${OUT_FILE}: ambiguous redirect
+slurmstepd: error: --task-epilog failed status=1

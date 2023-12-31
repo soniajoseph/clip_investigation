@@ -1,0 +1,5 @@
+[=== Module anaconda/3 loaded ===]
+[=== Module cudatoolkit/11.7 loaded ===]
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+0it [00:00, ?it/s]1it [22:38, 1358.15s/it]2it [39:33, 1156.68s/it]3it [52:28, 982.17s/it] 4it [1:07:42, 955.33s/it]4it [1:07:42, 1015.62s/it]

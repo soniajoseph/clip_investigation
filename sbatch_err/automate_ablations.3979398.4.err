@@ -1,0 +1,18 @@
+[=== Module anaconda/3 loaded ===]
+[=== Module cudatoolkit/11.7 loaded ===]
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+Traceback (most recent call last):
+  File "automate_ablations.py", line 338, in <module>
+    loaded = load_cached_act(layer_num, layer_type=layer_type)
+  File "automate_ablations.py", line 212, in load_cached_act
+    loaded = pd.read_parquet(os.path.join(save_path, file_name))
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/pandas/io/parquet.py", line 500, in read_parquet
+    **kwargs,
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/pandas/io/parquet.py", line 236, in read
+    mode="rb",
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/pandas/io/parquet.py", line 102, in _get_path_or_handle
+    path_or_handle, mode, is_text=False, storage_options=storage_options
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/pandas/io/common.py", line 711, in get_handle
+    handle = open(handle, ioargs.mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/network/scratch/s/sonia.joseph/clip_mechinterp/tinyclip/mini_dataset/mlp_fc2_4.npz'

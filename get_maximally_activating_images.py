@@ -111,7 +111,7 @@ def plot_image_patch_heatmap(activation_values_array, image, specific_neuron_idx
     # Plotting the image with the heatmap overlay
     fig, ax = plt.subplots()
     ax.imshow(image.permute(1,2,0))
-    ax.imshow(heatmap, cmap='viridis', alpha=0.6)  # Overlaying the heatmap
+    ax.imshow(heatmap, cmap='viridis', alpha=0.54)  # Overlaying the heatmap
 
     # Removing axes
     ax.axis('off')
@@ -121,7 +121,7 @@ def plot_image_patch_heatmap(activation_values_array, image, specific_neuron_idx
 
     # Adding colorbar for the heatmap
     plt.colorbar(plt.cm.ScalarMappable(cmap='viridis', norm=plt.Normalize(vmin=min_activation, vmax=max_activation)), ax=ax, orientation='vertical')
-    plt.title("Neuron {}'s Activation Values for class {}".format(specific_neuron_idx, class_name))
+    plt.title("{}".format(class_name))
 
     # Return plot
     return plt
@@ -146,7 +146,7 @@ def load_specific_image(dataset, indices, order):
     return image, label
 
 
-def visualize_top_n_results(loaded_df, sorted_df, layer_num, specific_neuron_idx, return_n=10, save_dir=None,
+def visualize_top_n_results(loaded_df, sorted_df, layer_num, specific_neuron_idx, return_n=20, save_dir=None,
                             imagenet_data=None):
 
     # layer_dir = os.path.join(save_dir, f'layer_{layer_num}')
@@ -154,8 +154,8 @@ def visualize_top_n_results(loaded_df, sorted_df, layer_num, specific_neuron_idx
     # if not os.path.exists(layer_dir):
     #     os.makedirs(layer_dir)
 
-    unique_top_entries = sorted_df[sorted_df['neuron_idx'] == specific_neuron_idx].drop_duplicates(subset='class_name').head(return_n)
-    unique_bottom_entries = sorted_df[sorted_df['neuron_idx'] == specific_neuron_idx].drop_duplicates(subset='class_name').tail(return_n)
+    unique_top_entries = sorted_df[sorted_df['neuron_idx'] == specific_neuron_idx].drop_duplicates(subset='class_name', keep='first').head(return_n)
+    unique_bottom_entries = sorted_df[sorted_df['neuron_idx'] == specific_neuron_idx].drop_duplicates(subset='class_name', keep='last').tail(return_n)
 
     # Extracting class names and activation values
     # unique_top_class_names = unique_top_entries['class_name'].tolist()
@@ -183,6 +183,9 @@ def visualize_top_n_results(loaded_df, sorted_df, layer_num, specific_neuron_idx
 
         # Save plot, no axes
         plot.savefig(os.path.join(layer_dir, f'neuron_{specific_neuron_idx}_max_{i}.png'), bbox_inches='tight')
+
+        # Save as svg
+        plot.savefig(os.path.join(layer_dir, f'neuron_{specific_neuron_idx}_max_{i}.svg'), bbox_inches='tight')
         plot.close()
 
     
@@ -190,6 +193,9 @@ def visualize_top_n_results(loaded_df, sorted_df, layer_num, specific_neuron_idx
         image, activation_values_array = get_image_and_activations_by_id(loaded_df, specific_neuron_idx, batch_idx, imagenet_data)
         plot = plot_image_patch_heatmap(activation_values_array, image, specific_neuron_idx, image_size=224, class_name=class_name)
         plot.savefig(os.path.join(layer_dir, f'neuron_{specific_neuron_idx}_min_{i}.png'), bbox_inches='tight')
+
+        # Save as svg
+        plot.savefig(os.path.join(layer_dir, f'neuron_{specific_neuron_idx}_min_{i}.svg'), bbox_inches='tight')
         plot.close()
 
         # print("Class Name:", unique_top_class_names[i])
