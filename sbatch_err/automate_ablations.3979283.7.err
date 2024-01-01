@@ -2,4 +2,4 @@
 [=== Module cudatoolkit/11.7 loaded ===]
 `text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
 `text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
-0it [00:00, ?it/s]1it [34:57, 2097.37s/it]2it [1:08:04, 2032.52s/it]
+0it [00:00, ?it/s]1it [34:57, 2097.37s/it]2it [1:08:04, 2032.52s/it]slurmstepd: error: *** JOB 3979291 ON cn-d004 CANCELLED AT 2023-12-31T03:11:21 DUE TO TIME LIMIT ***
