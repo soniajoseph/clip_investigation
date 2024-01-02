@@ -233,11 +233,14 @@ def logit_metric(logits, cup_indices):
 
     return diff
 
-def create_custom_hook(neuron_idx, new_value):
+def create_custom_hook(neuron_idx, new_value, patch_idx=None):
     # This is the actual hook function
     def custom_forward_hook(module, input, output):
         # Modify the output for the specified neuron
-        output[:, :, neuron_idx] = new_value
+        if patch_idx is not None:
+            output[:, patch_idx, neuron_idx] = new_value
+        else:
+            output[:, :, neuron_idx] = new_value # All patches
         return output
     return custom_forward_hook
 
@@ -246,15 +249,27 @@ def create_custom_hook(neuron_idx, new_value):
 # Load the image
 
 
-def ablate_and_get_logit_diff(image_tensor, idx, neuron_idx, layer_num, resampling_activations, model, processor, vanilla_logits, indices=None):
-
+def ablate_and_get_logit_diff(image_tensor, idx, neuron_idx, layer_num, resampling_activations, model, processor, vanilla_logits, layer_type = None, indices=None, patch_idx=None, whole_head=False):
 
     inputs = processor(text=imagenet_class_names, images=image_tensor, return_tensors="pt", padding=True)
 
-    new_value = resampling_activations.iloc[neuron_idx]  # example new value
-    custom_hook_function = create_custom_hook(neuron_idx, new_value)
+    if whole_head: # ablate entire head in attn
+        ...
+    else: # otherwise ablate specific neuron
+        if patch_idx is None:
+            new_value = resampling_activations['activation_value'].loc[resampling_activations['neuron_idx'] == neuron_idx]
+            new_value = new_value.iloc[0]  # example new value
+
+        else: # Get patch-specific activation
+            new_value = resampling_activations['activation_value'].loc[(resampling_activations['patch_idx'] == patch_idx) & 
+                                            (resampling_activations['neuron_idx'] == neuron_idx)]
+            new_value = new_value.iloc[0]
+
+    custom_hook_function = create_custom_hook(neuron_idx, new_value, patch_idx=patch_idx)
     ablated_model = copy.deepcopy(model)
-    hook = ablated_model.vision_model.encoder.layers[layer_num].mlp.fc1.register_forward_hook(custom_hook_function)
+
+    module = getattr(ablated_model.vision_model.encoder.layers[layer_num].mlp, layer_type)
+    hook = module.register_forward_hook(custom_hook_function)
 
     ablated_outputs = ablated_model(**inputs)
     logits_per_image = ablated_outputs.logits_per_image
@@ -308,15 +323,72 @@ def calculate_logit_diff_dictionary_per_class(image_list, class_type, indices, l
         outputs = model(**inputs)
         logits_per_image = outputs.logits_per_image # this is the image-text similarity score
         vanilla_logits = logits_per_image.detach().numpy()
+        
         for neuron_idx in tqdm(range(max_neuron)):
             vanilla, abl = ablate_and_get_logit_diff(image_tensor, idx, neuron_idx=neuron_idx, layer_num=layer_num, resampling_activations=avg_dog_activation,
-                                                    model=model, processor=processor, vanilla_logits=vanilla_logits, indices=indices)
+                                                    model=model, processor=processor, layer_type=layer_type, vanilla_logits=vanilla_logits, indices=indices)
             neuron_dict[neuron_idx].append(percent_change(vanilla, abl))
 
     # Save dictionary
     save_dir = '/network/scratch/s/sonia.joseph/clip_mechinterp/tinyclip/logit_differences/cup_logits'
     np.save(os.path.join(save_dir, f'neuron_dict_{layer_num}_{class_type}_{layer_type}.npy'), neuron_dict)
     print("Done")
+
+# Same as above but all patches for neuron
+def calculate_logit_diff_dictionary_per_neuron(image_list, class_type, indices, layer_num, layer_type, neuron_idx):
+
+    if layer_type == 'fc1':
+        max_neuron = 1024
+    elif layer_type == 'fc2':
+        max_neuron = 256
+    
+    neuron_dict = defaultdict(list)
+    for idx, image_tensor in tqdm(enumerate(image_list)):
+        print("On image", idx)
+        inputs = processor(text=imagenet_class_names, images=image_tensor, return_tensors="pt", padding=True)
+        outputs = model(**inputs)
+        logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+        vanilla_logits = logits_per_image.detach().numpy()
+       
+        for patch_idx in range(1):
+            vanilla, abl = ablate_and_get_logit_diff(image_tensor, idx, neuron_idx=neuron_idx, layer_num=layer_num, resampling_activations=avg_dog_activation,
+                                                    model=model, processor=processor, vanilla_logits=vanilla_logits, indices=indices, layer_type=layer_type, patch_idx = patch_idx)
+            pc = percent_change(vanilla, abl)
+            neuron_dict[patch_idx].append(pc)
+
+    # Save dictionary
+    save_dir = '/network/scratch/s/sonia.joseph/clip_mechinterp/tinyclip/logit_differences/cup_logits'
+    save_full_path = os.path.join(save_dir, f'neuron_dict_{layer_num}_{class_type}_{layer_type}_{neuron_idx}.npy')
+    np.save(save_full_path, neuron_dict)
+    print("Done. Saved to ", save_full_path)
+
+def calculate_logit_diff_dictionary_per_patch(image_list, class_type, indices, layer_num, layer_type, patch_idx):
+
+    if layer_type == 'fc1':
+        max_neuron = 1024
+    elif layer_type == 'fc2':
+        max_neuron = 256
+    
+    neuron_dict = defaultdict(list)
+    for idx, image_tensor in tqdm(enumerate(image_list)):
+        print("On image", idx)
+        inputs = processor(text=imagenet_class_names, images=image_tensor, return_tensors="pt", padding=True)
+        outputs = model(**inputs)
+        logits_per_image = outputs.logits_per_image # this is the image-text similarity score
+        vanilla_logits = logits_per_image.detach().numpy()
+       
+        for neuron_idx in range(1024):
+            vanilla, abl = ablate_and_get_logit_diff(image_tensor, idx, neuron_idx=neuron_idx, layer_num=layer_num, resampling_activations=avg_dog_activation,
+                                                    model=model, processor=processor, vanilla_logits=vanilla_logits, indices=indices, layer_type=layer_type, patch_idx = patch_idx)
+            pc = percent_change(vanilla, abl)
+            neuron_dict[patch_idx].append(pc)
+
+    # Save dictionary
+    save_dir = '/network/scratch/s/sonia.joseph/clip_mechinterp/tinyclip/logit_differences/cup_logits'
+    save_full_path = os.path.join(save_dir, f'neuron_dict_{layer_num}_{class_type}_{layer_type}_all_neurons_patch_{patch_idx}.npy')
+    np.save(save_full_path, neuron_dict)
+    print("Done. Saved to ", save_full_path)
+
 
 if __name__ == '__main__':
 
@@ -325,11 +397,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Process and save model activations")
     parser.add_argument("--layer_num", type=int, required=True, help="Model layer number to hook")
     parser.add_argument("--layer_type", type=str, required=True, help="MLP fc1 or fc2")
+    parser.add_argument("--neuron_idx", type=int, required=False, default=None, help="")
+
 
     args = parser.parse_args()
 
     layer_num = args.layer_num
     layer_type = args.layer_type
+    neuron_idx = args.neuron_idx
 
     model = CLIPModel.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M")
     processor = CLIPProcessor.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M", do_rescale=False) # Make sure the do_rescale is false for pytorch datasets
@@ -337,10 +412,10 @@ if __name__ == '__main__':
     # Load activations and get resampling activations
     loaded = load_cached_act(layer_num, layer_type=layer_type)
     print("Loaded activations.")
-    avg_dog_activation = loaded[loaded['class_name'].isin(dog_classes)].groupby('neuron_idx')['activation_value'].mean()
+    avg_dog_activation = loaded[loaded['class_name'].isin(dog_classes)].groupby(['patch_idx', 'neuron_idx'])['activation_value'].mean().reset_index()
 
     cup_dir = '/home/mila/s/sonia.joseph/CLIP_mechinterp/sample_images/cup_images'
-    new_cup_images = ['beer.png','many_cups.png','blue_cup.png','two_cups.png','tub.png']
+    new_cup_images = ['many_cups.png','blue_cup.png','two_cups.png','tub.png']
 
     random_dir = '/home/mila/s/sonia.joseph/CLIP_mechinterp/sample_images/random_images'
     random_images = ['banana.png', 'brocolli.png', 'cat.png', 'dog.png', 'hen.png', 'salamander.png']
@@ -357,7 +432,15 @@ if __name__ == '__main__':
     cup_indices = [imagenet_class_names.index(cup_name) for cup_name in cup_classes if cup_name in imagenet_class_names]
     dog_indices = [imagenet_class_names.index(dog_name) for dog_name in dog_classes if dog_name in imagenet_class_names]
 
+    # neuron_idx = 0
+    # calculate_logit_diff_dictionary_per_patch(new_cup_images, 'cups', cup_indices, layer_num, layer_type, patch_idx=0)
     calculate_logit_diff_dictionary_per_class(new_cup_images, 'cups', cup_indices, layer_num, layer_type)
+
+
+    # if not neuron_idx:
+    #     calculate_logit_diff_dictionary_per_class(new_cup_images, 'cups', cup_indices, layer_num, layer_type)
+    # else:
+    #     calculate_logit_diff_dictionary_per_neuron(new_cup_images, 'cups', cup_indices, layer_num, layer_type, neuron_idx)
     # calculate_logit_diff_dictionary_per_class(random_images, 'random', cup_indices, layer_num, layer_type)
     # calculate_logit_diff_dictionary_per_class(dog_images, 'dogs', dog_indices, layer_num, layer_type)
 

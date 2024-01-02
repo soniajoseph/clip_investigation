@@ -1,0 +1,39 @@
+[=== Module anaconda/3 loaded ===]
+[=== Module cudatoolkit/11.7 loaded ===]
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+`text_config_dict` is provided which will be used to initialize `CLIPTextConfig`. The value `text_config["id2label"]` will be overriden.
+0it [00:00, ?it/s]
+  0%|          | 0/1024 [00:00<?, ?it/s][A  0%|          | 0/1024 [00:03<?, ?it/s]
+0it [00:07, ?it/s]
+Traceback (most recent call last):
+  File "automate_ablations.py", line 435, in <module>
+    calculate_logit_diff_dictionary_per_class(new_cup_images, 'cups', cup_indices, layer_num, layer_type)
+  File "automate_ablations.py", line 325, in calculate_logit_diff_dictionary_per_class
+    model=model, processor=processor, layer_type=layer_type, vanilla_logits=vanilla_logits, indices=indices)
+  File "automate_ablations.py", line 270, in ablate_and_get_logit_diff
+    ablated_outputs = ablated_model(**inputs)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/transformers/models/clip/modeling_clip.py", line 1128, in forward
+    return_dict=return_dict,
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/transformers/models/clip/modeling_clip.py", line 872, in forward
+    return_dict=return_dict,
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/transformers/models/clip/modeling_clip.py", line 658, in forward
+    output_attentions=output_attentions,
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/transformers/models/clip/modeling_clip.py", line 393, in forward
+    hidden_states = self.mlp(hidden_states)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/transformers/models/clip/modeling_clip.py", line 348, in forward
+    hidden_states = self.fc1(hidden_states)
+  File "/home/mila/s/sonia.joseph/ViT-Planetarium/env/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1215, in _call_impl
+    hook_result = hook(self, input, result)
+  File "automate_ablations.py", line 243, in custom_forward_hook
+    output[:, :, neuron_idx] = new_value # All patches
+TypeError: can't assign a Series to a torch.FloatTensor

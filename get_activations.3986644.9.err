@@ -1,0 +1,9 @@
+[=== Module anaconda/3 loaded ===]
+[=== Module cudatoolkit/11.7 loaded ===]
+usage: get_activations.py [-h] --layer_num LAYER_NUM
+                          [--module_name MODULE_NAME] [--attn] [--MAX MAX]
+get_activations.py: error: unrecognized arguments: --layer_type fc2
+/etc/slurm/slurmtask_epilog: line 26: ${OUT_FILE}: ambiguous redirect
+/etc/slurm/slurmtask_epilog: line 27: ${OUT_FILE}: ambiguous redirect
+/etc/slurm/slurmtask_epilog: line 28: ${OUT_FILE}: ambiguous redirect
+slurmstepd: error: --task-epilog failed status=1
