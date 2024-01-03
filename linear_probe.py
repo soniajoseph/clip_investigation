@@ -1,6 +1,6 @@
 import os
-import clip
 import torch
+import json
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -67,7 +67,7 @@ def load_imagenet(subset_size=10000, train_split=0.8):
     train_loader = DataLoader(imagenet_data, sampler=train_sampler, batch_size=100)
     test_loader = DataLoader(imagenet_data, sampler=test_sampler, batch_size=100)
 
-    return train_loader, test_loader
+    return train_loader, test_loader, imagenet_class_names
 
 
 def register_hook(module):
@@ -76,26 +76,14 @@ def register_hook(module):
         activations_list.append(output[0].detach())
     return module.register_forward_hook(hook)
 
-model = CLIPModel.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M")
-processor = CLIPProcessor.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M", do_rescale=False) # Make sure the do_rescale is false for pytorch datasets
-
-train_loader, test_loader = load_imagenet(subset_size=10000) # get 10k samples
-
-layer_num = 7
-module_name = 'fc2'
-module = getattr(model.vision_model.encoder.layers[layer_num].mlp, module_name)
-
-register_hook(module)
-
-activations_list = []
-total_labels = []
-
-def get_features(dataloader, layer_num): # layer to train on
+def get_features(dataloader, imagenet_class_names): # layer to train on
     all_features = []
     all_labels = []
 
     activations_list.clear()
     
+    max = 10
+    count = 0
     with torch.no_grad():
         for images, labels in tqdm(dataloader):
 
@@ -107,17 +95,85 @@ def get_features(dataloader, layer_num): # layer to train on
             # logits_per_image = outputs.logits_per_image # this is the image-text similarity score
             # probs = logits_per_image.softmax(dim=1) # we can take the softmax to get the label probabilities
             # predicted_class_name = imagenet_class_names[probs.argmax(dim=1)]
+
+            count += 1
+            if count > max:
+                break
     return activations_list, torch.cat(total_labels).cpu().numpy()
 
+
+
+
+model = CLIPModel.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M")
+processor = CLIPProcessor.from_pretrained("wkcn/TinyCLIP-ViT-8M-16-Text-3M-YFCC15M", do_rescale=False) # Make sure the do_rescale is false for pytorch datasets
+
+train_loader, test_loader, imagenet_class_names = load_imagenet(subset_size=10000) # get 10k samples
+
+layer_num = 7
+module_name = 'fc2'
+module = getattr(model.vision_model.encoder.layers[layer_num].mlp, module_name)
+
+register_hook(module)
+
+activations_list = []
+total_labels = []
+
 # Calculate the image features
-train_features, train_labels = get_features(train_loader)
-test_features, test_labels = get_features(test_loader)
+print("Collecting intermediate actiavitions")
+train_features, train_labels = get_features(train_loader, imagenet_class_names)
+test_features, test_labels = get_features(test_loader, imagenet_class_names)
 
-# Perform logistic regression
-classifier = LogisticRegression(random_state=0, C=0.316, max_iter=1000, verbose=1)
-classifier.fit(train_features, train_labels)
+# Save the features
+print("Saving features")
+save_dir = f'/network/scratch/s/sonia.joseph/clip_mechinterp/tinyclip/intermediate_acts'
+np.save(os.path.join(save_dir, f"train_features_layer_{layer_num}.npy"), train_features,)
+np.save(os.path.join(save_dir, f"train_labels_layer_{layer_num}.npy"), train_labels)
+np.save(os.path.join(save_dir, f"test_features_layer_{layer_num}.npy"), test_features)
+np.save(os.path.join(save_dir, f"test_labels_layer_{layer_num}.npy"), test_labels)
 
-# Evaluate using the logistic regression classifier
-predictions = classifier.predict(test_features)
-accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
-print(f"Accuracy = {accuracy:.3f}")
+
+print("Fitting logistic regression model")
+
+class LogisticRegressionModel(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(LogisticRegressionModel, self).__init__()
+        self.linear = nn.Linear(input_dim, output_dim)
+
+    def forward(self, x):
+        outputs = self.linear(x)
+        return outputs
+
+# Assuming train_features and train_labels are PyTorch tensors
+input_dim = train_features.shape[-1]
+output_dim = 1000 # or the number of classes in your case
+
+model = LogisticRegressionModel(input_dim, output_dim)
+model = model.to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.01)
+
+# Training loop
+for epoch in range(1000):  # number of epochs
+    model.train()
+    optimizer.zero_grad()
+
+    # Get intermediate activations as train_features
+
+    outputs = model(train_features.to(device))
+    loss = criterion(outputs, train_labels.to(device))
+    loss.backward()
+    optimizer.step()
+
+# Evaluation
+model.eval()
+with torch.no_grad():
+    correct = 0
+    total = 0
+    outputs = model(test_features.to(device))
+    _, predicted = torch.max(outputs.data, 1)
+    total += test_labels.size(0)
+    correct += (predicted == test_labels.to(device)).sum().item()
+
+accuracy = 100 * correct / total
+print(f'Accuracy: {accuracy:.3f}%')

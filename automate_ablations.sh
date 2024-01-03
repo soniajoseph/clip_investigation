@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-gpu=4
 #SBATCH --mem=128Gb
-#SBATCH --time=10:00
+#SBATCH --time=50:00
 ###SBATCH --ntasks=16
 #SBATCH --output=sbatch_out/automate_ablations.%A.%a.out
 #SBATCH --error=sbatch_err/automate_ablations.%A.%a.err
